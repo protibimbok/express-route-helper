@@ -1,0 +1,27 @@
+{
+  "name": "express-route-helper",
+  "version": "1.0.0",
+  "main": "main.js",
+  "type": "module",
+  "license": "MIT",
+  "repository": "http://github.com/protibimbok/express-route-helper",
+  "keywords": [
+    "express",
+    "router"
+  ],
+  "readmeFilename": "readme.md",
+  "author": {
+    "name": "Sakibur Rahman Khan (Saad)",
+    "email": "sakib.saad.khan@gmail.com"
+  },
+  "scripts": {
+    "dev": "npx nodemon ./test/main.js",
+    "publish": "yarn publish"
+  },
+  "dependencies": {
+    "express": "^4.17.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
