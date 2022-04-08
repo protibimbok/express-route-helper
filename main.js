@@ -1,12 +1,11 @@
 import {readdirSync, lstatSync} from 'fs';
 import _Routes from './router.js';
 import { Router } from 'express';
-import { dirname } from 'path';
 import { pathToFileURL } from 'url';
 import {_Middlewares} from './holders.js';
 import {viaFn, addVias, _ViaPaths} from './via.js';
 
-export { get, post, put, patch, del, use, middleware, route, via } from './router.js';
+export { get, post, put, patch, del, all, use, middleware, route, via } from './router.js';
 
 
 let app, _viaAdded = false;
