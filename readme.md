@@ -44,8 +44,8 @@ const app = express();
 
 await loadRoutes(app);
 
-app.listen(7223, ()=>{
-    console.log('http://localhost:7223');
+app.listen(3000, ()=>{
+    console.log('http://localhost:3000');
 });
 
 ```
@@ -70,7 +70,7 @@ export const log3 = (req, res, next) => {
 Then write your routes file like this:
 
 ```javascript
-import {get, post, put, patch, del, use, middleware, route, via} from 'express-route-helper';
+import {get, post, put, patch, del, all, use, middleware, route, via} from 'express-route-helper';
 
 get('/nolog', (req, res)=>{
     res.send('No log..');
@@ -96,11 +96,17 @@ route('/').via('log').middleware(['log3']).group(()=>{
 ```
 ## Function Reference
 
-#### loadRoutes (default)
+#### loadRoutes(app, routes_dir, middlewares_dir)
 
 ```javascript
-loadRoutes(app, routes_dir, middlewares_dir);
+import express from 'express';
+import loadRoutes from `express-route-helper`;
+const app = express();
+await loadRoutes(app);
+app.listen(3000);
 ```
+
+**Note:** *This function is exported as default.*
 
 | Parameter         | Type     |  Default    | Description                |
 | :---------------- | :------- | :---------- | :------------------------- |
@@ -292,10 +298,7 @@ Internally this is sorted in a way that all of the routes can be accessed!
 
 #### 5. `via` - New way of middlewares
 
-Express handles middlewares in a way that, all of the middlewares registered for `/chat`
-will get called for every request that starts with `/chat/` ( i.e. `/chat/add`, `/chat/get`).
-With `via`, I've tried to fix this problem. Currently it only works for plain routes only.
-Dynamic `/path/:param` or `/^regex/` is not supported yet.
+Same as `middleware`. Included as a shorthand.
 
 ```javascript
 
@@ -311,8 +314,6 @@ get('/path/:param', (req, res)=>{
 
 ```
 
-For the previous example, the middlewares `fn1` and `fn2` will only get called for `/path`
-route.
 
 #### 6. Route grouping
 

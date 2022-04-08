@@ -1,5 +1,5 @@
 const _Routes = {};
-['get', 'post', 'put', 'delete', 'patch', 'use'].forEach((type)=>{
+['get', 'post', 'put', 'delete', 'patch', 'all', 'use'].forEach((type)=>{
     _Routes[type] = {indexes: [], dynamics:{indexes: []}};
 });
 
@@ -17,13 +17,9 @@ const storeObj = (obj, type, path, handler)=>{
     if(typeof _Routes[type][count][rpath].regex === 'undefined'){
         _Routes[type][count][rpath].regex = [];
     }
-    if(obj._vias.length > 0){
-        console.error('Via is not supported for object routes');
-    }
     _Routes[type][count][rpath].regex.push({
         handler,
         middlewares: obj._middlewares,
-        vias: obj._vias,
         path
     });
 }
@@ -51,16 +47,11 @@ const storeDyn = (obj, type, path, handler)=>{
         _Routes[type][count].dynamics[len] = [];
         _Routes[type][count].dynamics.indexes.push(len);
     }
-    
-    if(obj._vias.length > 0){
-        console.error('Via is not supported for object routes: '+path);
-    }
-
+   
     _Routes[type][count].dynamics[len].push({
         path,
         handler,
-        middlewares: obj._middlewares,
-        vias: obj._vias
+        middlewares: obj._middlewares
     });
     return true;
 }
@@ -84,8 +75,7 @@ const store = (obj, type, path, handler)=>{
     if(path === '/'){
         _Routes[type].home = {
             handler,
-            middlewares: obj._middlewares,
-            vias: obj._vias
+            middlewares: obj._middlewares
         }
         return;
     }
@@ -96,27 +86,37 @@ const store = (obj, type, path, handler)=>{
         _Routes[type].indexes.push(count);
     }
 
-    if(typeof _Routes[type][count][path] === 'undefined'){
-        _Routes[type][count][path] = {
-            handler,
-            middlewares: obj._middlewares,
-            vias: obj._vias
-        }
-    }else{
-        _Routes[type][count][path].handler = handler;
-        _Routes[type][count][path].middlewares = obj._middlewares;
-        _Routes[type][count][path].vias = obj._vias;
-    }
-    
+    _Routes[type][count][path] = _Routes[type][count][path] || {};
+    _Routes[type][count][path].handler = handler;
+    _Routes[type][count][path].middlewares = obj._middlewares;
+}
+
+
+const nestedGroup = (self, obj, fn)=>{
+    obj._path+='/'+self._path;
+    const oldMids = obj._middlewares;
+    obj._middlewares = [...self._middlewares, ...obj._middlewares];
+    fn();
+    obj._path = obj._path.replace(new RegExp('/'+self._path+'$'), '');
+    obj._middlewares = oldMids;
 }
 
 
 let obj;
+
+
+const preStore = (self, type, path, handler)=>{
+    if(obj){
+        nestedGroup(self, obj, ()=>store(obj, type, path, handler));
+    }else{
+        store(self, type, path, handler);
+    }
+}
+
 class Router{
     constructor(){
         this._path = '';
         this._objPath = [];
-        this._vias = [];
         this._middlewares = [];
     }
 
@@ -140,19 +140,12 @@ class Router{
 
     /**
      * 
-     * @param {Function[]|Function} middlewares 
+     * @param {Function[]|Function} vias 
      * @returns 
      */
 
     via(vias){
-        if(typeof vias === 'function' || typeof vias === 'string'){
-            this._vias.push(vias);
-        }else if (Array.isArray(vias)){
-            vias.forEach(via=>{
-                this._vias.push(via);
-            });
-        }
-        return this;
+        return this.middleware(vias);
     }
 
     /**
@@ -163,7 +156,7 @@ class Router{
      */
 
     get(path, handler){
-        store(this, 'get', path, handler);
+        preStore(this, 'get', path, handler);
         return this;
     }
     
@@ -174,7 +167,7 @@ class Router{
      * @returns 
      */
     post(path, handler){
-        store(this, 'post', path, handler);
+        preStore(this, 'post', path, handler);
         return this;
     }
 
@@ -186,7 +179,7 @@ class Router{
      * @returns 
      */
     put(path, handler){
-        store(this, 'put', path, handler);
+        preStore(this, 'put', path, handler);
         return this;
     }
     
@@ -197,7 +190,7 @@ class Router{
      * @returns 
      */
     patch(path, handler){
-        store(this, 'patch', path, handler);
+        preStore(this, 'patch', path, handler);
         return this;
     }
     
@@ -208,7 +201,7 @@ class Router{
      * @returns 
      */
     delete(path, handler){
-        store(this, 'delete', path, handler);
+        preStore(this, 'delete', path, handler);
         return this;
     }
     
@@ -219,7 +212,7 @@ class Router{
      * @returns 
      */
     all(path, handler){
-        store(this, 'all', path, handler);
+        preStore(this, 'all', path, handler);
         return this;
     }
     
@@ -230,22 +223,10 @@ class Router{
      * @returns 
      */
     use(path, handler){
-        store(this, 'use', path, handler);
+        preStore(this, 'use', path, handler);
         return this;
     }
 
-    nestedGroup(fn){
-        obj._path+='/'+this._path;
-        const oldMids = obj._middlewares;
-        const oldVias = obj._vias;
-        obj._middlewares = this._middlewares;
-        obj._vias = [...oldVias, ...this._vias];
-        fn();
-        obj._path = obj._path.replace(new RegExp('/'+this._path+'$'), '');
-        obj._middlewares = oldMids;
-        obj._vias = oldVias;
-    }
-    
     /**
      * 
      * @param {Function} fn 
@@ -253,7 +234,7 @@ class Router{
      */
     group(fn){
         if(obj){
-            this.nestedGroup(fn);
+            nestedGroup(this, obj, fn);
         }else{
             obj = this;
             fn();

@@ -1,6 +1,6 @@
 {
   "name": "express-route-helper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "main.js",
   "type": "module",
   "license": "MIT",
@@ -15,6 +15,7 @@
     "email": "sakib.saad.khan@gmail.com"
   },
   "scripts": {
+    "test": "node ./test.js",
     "dev": "npx nodemon ./test/main.js",
     "publish": "yarn publish"
   },
